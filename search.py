@@ -19,6 +19,7 @@ Pacman agents (in searchAgents.py).
 from game import Directions
 import util
 from util import Stack, Queue, PriorityQueue, PriorityQueueWithFunction
+import math
 
 class SearchTreeNode:
     def __init__(self, state):
@@ -28,28 +29,45 @@ class SearchTreeNode:
 class GenericSearchAlgorithm:
     def __init__(self,method_name,problem):
         method =  globals()[method_name]
+        self.method_name = method_name
         self.method = method()
         self.problem = problem
         self.discoveryTreeRoot = None
+
+    # first find distance from goal point
+    def cost(self, s):
+        p = (1,1)
+        if p == s: return 0
+        df = math.sqrt(pow(s[0]-p[0],2)+pow(s[1]-p[1],2))
+        
+        p = self.problem.getStartState()
+        if p == s: return 0
+        ds = math.sqrt(pow(s[0]-p[0],2)+pow(s[1]-p[1],2))
+
+        return (df-ds)
 
     def __call__(self,s):
         S = SearchTreeNode(s)
         discovered = [s]
         self.discoveryTreeRoot = discovered[0]
-        self.method.push(S)
+        if self.method_name == "PriorityQueue":
+            self.method.push(S,self.cost(s))
+        elif self.method_name == "PriorityQueueWithFunction":
+            pass
+        else:
+            self.method.push(S)
 
-        self.directions = {'N':Directions.NORTH,
-                            'S':Directions.SOUTH,
-                            'E':Directions.EAST,
-                            'W':Directions.WEST}
+        self.directions = {'North':Directions.NORTH,
+                            'South':Directions.SOUTH,
+                            'East':Directions.EAST,
+                            'West':Directions.WEST}
 
         while not self.method.isEmpty():
-            v = self.method.pop()
-            
-            if len(v.state) == 2:
-                adjacent = self.problem.getSuccessors(v.state)
+            V = self.method.pop()
+            if V.state == self.problem.getStartState():
+                adjacent = self.problem.getSuccessors(V.state)
             else:
-                adjacent = self.problem.getSuccessors(v.state[0])
+                adjacent = self.problem.getSuccessors(V.state[0])
  
             for u in adjacent:
                 position = u[0]
@@ -57,16 +75,21 @@ class GenericSearchAlgorithm:
 
                 if not position in discovered:
                     discovered.append(position)
-                    U.parent = v
+                    U.parent = V
                     # update for all search methods
-                    self.method.push(U)
+                    if self.method_name == "PriorityQueue":
+                        self.method.push(U,self.cost(u[0]))
+                    elif self.method_name == "PriorityQueueWithFunction":
+                        pass
+                    else:
+                        self.method.push(U)
 
                 if self.problem.isGoalState(position):
                     A = []
                     while U != None:
                         d = U.state[-2]
                         if type(d) != int:
-                            A.insert(0,self.directions[d[0]])         
+                            A.insert(0,self.directions[d])         
                         U = U.parent
                     return A
 
@@ -147,15 +170,23 @@ def depthFirstSearch(problem):
     solution = dfsSearch(s)
     print(solution)
     return solution
+
 def breadthFirstSearch(problem):
-    """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    s = problem.getStartState()
+    bfsSearch = GenericSearchAlgorithm("Queue", problem)
+    solution = bfsSearch(s)
+    print(solution)
+    return solution
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    s = problem.getStartState()
+    ucsSearch = GenericSearchAlgorithm("PriorityQueue", problem)
+    solution = ucsSearch(s)
+    print(solution)
+    return solution
 
 def nullHeuristic(state, problem=None):
     """
