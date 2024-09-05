@@ -16,45 +16,59 @@
 In search.py, you will implement generic search algorithms which are called by
 Pacman agents (in searchAgents.py).
 """
-
+from game import Directions
 import util
-import numpy as np
+from util import Stack, Queue, PriorityQueue, PriorityQueueWithFunction
 
 class SearchTreeNode:
     def __init__(self, state):
-        self.s = state
+        self.state = state
         self.parent = None
 
 class GenericSearchAlgorithm:
-    def __init__(self,method_name):
-        method = globals()["util."+method_name]
-    def __call__(self,s):
-        
-        discovered = [SearchTreeNode(s)]
-        
-        discoveryTreeRoot = discovered[0]
+    def __init__(self,method_name,problem):
+        method =  globals()[method_name]
         self.method = method()
+        self.problem = problem
+        self.discoveryTreeRoot = None
+
+    def __call__(self,s):
+        S = SearchTreeNode(s)
+        discovered = [s]
+        self.discoveryTreeRoot = discovered[0]
+        self.method.push(S)
+
+        self.directions = {'N':Directions.NORTH,
+                            'S':Directions.SOUTH,
+                            'E':Directions.EAST,
+                            'W':Directions.WEST}
+
         while not self.method.isEmpty():
             v = self.method.pop()
-            adjacent = problem.getSuccessors(v)
+            
+            if len(v.state) == 2:
+                adjacent = self.problem.getSuccessors(v.state)
+            else:
+                adjacent = self.problem.getSuccessors(v.state[0])
+ 
             for u in adjacent:
-                u = SearchTreeNode(u)
-                if not u in discovered:
-                    discovered.append(u)
-                    u.parent = v
+                position = u[0]
+                U = SearchTreeNode(u)
+
+                if not position in discovered:
+                    discovered.append(position)
+                    U.parent = v
                     # update for all search methods
-                    self.method.push(u)
+                    self.method.push(U)
 
-                if problem.isGoalState():
-                    # trace back to root
-                    continue
-                    
-
-
-    def recoverSolution(self):
-        pass
-
-    #def __call__(self, s)
+                if self.problem.isGoalState(position):
+                    A = []
+                    while U != None:
+                        d = U.state[-2]
+                        if type(d) != int:
+                            A.insert(0,self.directions[d[0]])         
+                        U = U.parent
+                    return A
 
 class SearchProblem:
     """
@@ -104,7 +118,6 @@ def tinyMazeSearch(problem):
     Returns a sequence of moves that solves tinyMaze.  For any other maze, the
     sequence of moves will be incorrect, so only use this for tinyMaze.
     """
-    from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
 
@@ -129,11 +142,11 @@ def depthFirstSearch(problem):
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
     "*** YOUR CODE HERE ***"
-
-    print("Start:", problem.getStartState())
-    print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
-    print("Start's successors:", problem.getSuccessors(problem.getStartState()))
-
+    s = problem.getStartState()
+    dfsSearch = GenericSearchAlgorithm("Stack", problem)
+    solution = dfsSearch(s)
+    print(solution)
+    return solution
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
