@@ -34,7 +34,7 @@ class GenericSearchAlgorithm:
         self.problem = problem
         self.discoveryTreeRoot = None
 
-    # first find distance from goal point
+    # finds the difference in distance from the start and the distance from the goal state
     def cost(self, s):
         p = (1,1)
         if p == s: return 0
@@ -44,7 +44,7 @@ class GenericSearchAlgorithm:
         if p == s: return 0
         ds = math.sqrt(pow(s[0]-p[0],2)+pow(s[1]-p[1],2))
 
-        return (df-ds)
+        return df-ds
 
     def __call__(self,s):
         S = SearchTreeNode(s)
