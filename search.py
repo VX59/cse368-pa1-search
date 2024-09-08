@@ -20,27 +20,38 @@ from game import Directions
 import util
 from util import Stack, Queue, PriorityQueue, PriorityQueueWithFunction
 import math
+import numpy as np
 
 class SearchTreeNode:
     def __init__(self, state):
+        self.depth = 0
         self.state = state
         self.parent = None
 
 class GenericSearchAlgorithm:
-    def __init__(self,method_name,problem):
-        method =  globals()[method_name]
+
+    def PriorityFunction(self, item):
+        return self.heuristic(item, self.problem)
+
+    def __init__(self,method_name,problem,heuristic=None):
+
         self.method_name = method_name
-        self.method = method()
         self.problem = problem
-        self.discoveryTreeRoot = None
+        self.heuristic = heuristic
+        if method_name == "HQueue":
+            method = globals()["PriorityQueue"]
+        else:
+            method = globals()[method_name]
+        
+        self.method = method()
 
     # finds the difference in distance from the start and the distance from the goal state
-    def cost(self, s):
+    def cost(self, s, problem):
         p = (1,1)
         if p == s: return 0
         df = math.sqrt(pow(s[0]-p[0],2)+pow(s[1]-p[1],2))
         
-        p = self.problem.getStartState()
+        p = problem.getStartState()
         if p == s: return 0
         ds = math.sqrt(pow(s[0]-p[0],2)+pow(s[1]-p[1],2))
 
@@ -49,11 +60,8 @@ class GenericSearchAlgorithm:
     def __call__(self,s):
         S = SearchTreeNode(s)
         discovered = [s]
-        self.discoveryTreeRoot = discovered[0]
-        if self.method_name == "PriorityQueue":
-            self.method.push(S,self.cost(s))
-        elif self.method_name == "PriorityQueueWithFunction":
-            pass
+        if self.method_name == "PriorityQueue" or self.method_name == "HQueue":
+            self.method.push(S,0)
         else:
             self.method.push(S)
 
@@ -61,7 +69,6 @@ class GenericSearchAlgorithm:
                             'South':Directions.SOUTH,
                             'East':Directions.EAST,
                             'West':Directions.WEST}
-
         while not self.method.isEmpty():
             V = self.method.pop()
             if V.state == self.problem.getStartState():
@@ -70,25 +77,29 @@ class GenericSearchAlgorithm:
                 adjacent = self.problem.getSuccessors(V.state[0])
  
             for u in adjacent:
-                position = u[0]
+                state = u[0]
                 U = SearchTreeNode(u)
 
-                if not position in discovered:
-                    discovered.append(position)
+                if not state in discovered:
+                    discovered.append(state)
                     U.parent = V
+                    U.depth = V.depth - u[-1]
                     # update for all search methods
                     if self.method_name == "PriorityQueue":
-                        self.method.push(U,self.cost(u[0]))
-                    elif self.method_name == "PriorityQueueWithFunction":
-                        pass
+                        self.method.push(U,U.depth)
+                    elif self.method_name == "HQueue":
+                        cost = self.heuristic(u[0],self.problem)
+                        self.method.push(U,(cost+U.depth))
                     else:
                         self.method.push(U)
 
-                if self.problem.isGoalState(position):
+                if self.problem.isGoalState(state):
+                    # Create coordinate grids
                     A = []
-                    while U != None:
+                    while U != None:    
                         d = U.state[-2]
-                        if type(d) != int:
+                        #print(U.state)
+                        if isinstance(d,str):
                             A.insert(0,self.directions[d])         
                         U = U.parent
                     return A
@@ -198,7 +209,11 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    s = problem.getStartState()
+    astarSearch = GenericSearchAlgorithm("HQueue", problem, heuristic=heuristic)
+    solution = astarSearch(s)
+    print(solution)
+    return solution
 
 
 # Abbreviations
