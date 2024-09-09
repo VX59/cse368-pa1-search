@@ -304,16 +304,19 @@ class CornersProblem(search.SearchProblem):
         return [self.startingPosition,self.corners]
 
     # the goal state is when that OR(P) == False
+
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
+        inCorner, completed = False,False
+        if state[0] in self.corners:
+            inCorner = True
         if len(state[1]) == 0:
             self._visitedlist.append(state[0])
-            return True
-        else:
-            return False
+            completed = True
+        return inCorner, completed
 
     def getSuccessors(self, state):
         """
@@ -332,10 +335,7 @@ class CornersProblem(search.SearchProblem):
             x,y = state[0]
             dx, dy = Actions.directionToVector(direction)
             nextx, nexty = int(x + dx), int(y + dy)
-            if not self.walls[nextx][nexty]:
-                if (nextx,nexty) in self.corners:
-                    state[1].remove((nextx,nexty))
-                    print("removed", (nextx,nexty))                       
+            if not self.walls[nextx][nexty]:                                        
                 nextState = [(nextx, nexty),state[1]]
                 successors.append( ( nextState, direction, 1) )
         import __main__
@@ -389,15 +389,21 @@ def cornersHeuristic(state, problem):
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
     distances = [math.sqrt(pow(state[0][0]-x[0],2)+pow(state[0][1]-x[1],2)) for x in corners]
+    # draw an axis over the point to evaluate, take the number of walls intersected going up
+    # and the number of walls intersected going sideways, take the distance using those 2 numbers of the hypotenuse
+    # 
+
+    # doesnt work
     # how close is it to the closest corner
     # get the closest corner
     test = dict(zip(distances,corners)) 
     if distances:
         closest = min(distances)
         closest_corner = test[closest]
-        closest_side = min([pow(state[0][0]-closest_corner[0],2),pow(state[0][1]-closest_corner[1],2)])
-        return closest+closest_side
+        return closest 
     else: return 0
+
+    
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"

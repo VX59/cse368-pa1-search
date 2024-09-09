@@ -37,7 +37,9 @@ class GenericSearchAlgorithm:
 
         self.method_name = method_name
         self.problem = problem
+        print(problem.walls)
         self.heuristic = heuristic
+        self.targetNodes = []
         if method_name == "HQueue":
             method = globals()["PriorityQueue"]
         else:
@@ -93,16 +95,16 @@ class GenericSearchAlgorithm:
                     else:
                         self.method.push(U)
 
-                if self.problem.isGoalState(state):
-                    # Create coordinate grids
-                    A = []
-                    while U != None:    
-                        d = U.state[-2]
-                        #print(U.state)
-                        if isinstance(d,str):
-                            A.insert(0,self.directions[d])         
-                        U = U.parent
-                    return A
+                intarget, completed = self.problem.isGoalState(state)
+                if intarget:
+                    self.targetNodes.insert(0,U)
+                    state[1].remove(state[0])
+                    print("removed", state[0])
+
+                if completed:
+                    print("completed")
+                    targets = self.targetNodes.copy()
+                    return []
 
 class SearchProblem:
     """
@@ -212,7 +214,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     s = problem.getStartState()
     astarSearch = GenericSearchAlgorithm("HQueue", problem, heuristic=heuristic)
     solution = astarSearch(s)
-    print(solution)
+    #print(solution)
     return solution
 
 
