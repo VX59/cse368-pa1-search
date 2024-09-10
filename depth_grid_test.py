@@ -13,8 +13,14 @@ def getDistances(p,targets):
         S.append(distance(p,t))
     return S
 
-from searchAgents import NormalDepth
 
+import math
+def NormalDepth(x):
+    rho = 1/4
+    x = rho*x
+    mu = 0; phi = 1
+    return  rho*((1/phi*math.sqrt(2*math.pi))*pow(math.e,(-1/2)*pow((x-mu)/phi,2)))
+    
 def totalDepth(p, targets):
     distances = [math.sqrt(pow(p[0]-x[0],2)+pow(p[1]-x[1],2)) for x in targets]
     # how close is it to the closest corner

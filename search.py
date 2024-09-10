@@ -22,89 +22,66 @@ from util import Stack, Queue, PriorityQueue, PriorityQueueWithFunction
 import math
 import numpy as np
 
-class SearchTreeNode:
-    def __init__(self, state):
-        self.depth = 0
+class Node:
+    def __init__(self,state,direction, weight):
         self.state = state
-        self.parent = None
+        self.direction = direction
+        self.weight = weight
 
-class GenericSearchAlgorithm:
-
-    def PriorityFunction(self, item):
-        return self.heuristic(item, self.problem)
-
-    def __init__(self,method_name,problem,heuristic=None):
-
-        self.method_name = method_name
+class GraphSearch:
+    def __init__(self,methodName,problem,heuristic=lambda x,y: 0):
+        self.methodName = methodName
         self.problem = problem
-        print(problem.walls)
         self.heuristic = heuristic
-        self.targetNodes = []
-        if method_name == "HQueue":
-            method = globals()["PriorityQueue"]
+        self.method = globals()[methodName]()
+        self.ancestors = {}
+    
+        self.directions = {'North':Directions.NORTH,
+                        'South':Directions.SOUTH,
+                        'East':Directions.EAST,
+                        'West':Directions.WEST}
+
+    def push(self,item,priority):
+        if self.methodName == "PriorityQueue":
+            self.method.push(item,priority)
         else:
-            method = globals()[method_name]
-        
-        self.method = method()
+            self.method.push(item)
 
-    # finds the difference in distance from the start and the distance from the goal state
-    def cost(self, s, problem):
-        p = (1,1)
-        if p == s: return 0
-        df = math.sqrt(pow(s[0]-p[0],2)+pow(s[1]-p[1],2))
-        
-        p = problem.getStartState()
-        if p == s: return 0
-        ds = math.sqrt(pow(s[0]-p[0],2)+pow(s[1]-p[1],2))
-
-        return df-ds
+    def reconstructPath(self,state):
+        path = []
+        while state.direction != None:
+            path.append(state.direction)
+            state = self.ancestors[state]
+        path.reverse()
+        return path
 
     def __call__(self,s):
-        S = SearchTreeNode(s)
         discovered = [s]
-        if self.method_name == "PriorityQueue" or self.method_name == "HQueue":
-            self.method.push(S,0)
-        else:
-            self.method.push(S)
 
-        self.directions = {'North':Directions.NORTH,
-                            'South':Directions.SOUTH,
-                            'East':Directions.EAST,
-                            'West':Directions.WEST}
+        self.push((None,Node(s,None,0)),0)
+
         while not self.method.isEmpty():
-            V = self.method.pop()
-            if V.state == self.problem.getStartState():
-                adjacent = self.problem.getSuccessors(V.state)
-            else:
-                adjacent = self.problem.getSuccessors(V.state[0])
- 
-            for u in adjacent:
-                state = u[0]
-                U = SearchTreeNode(u)
+            prevNode, node = self.method.pop()
+            currentState = node.state
+            self.ancestors[node] = prevNode
+            if self.problem.isGoalState(currentState):
+                print("completed")
+                return self.reconstructPath(node)
 
-                if not state in discovered:
-                    discovered.append(state)
-                    U.parent = V
-                    U.depth = V.depth - u[-1]
-                    # update for all search methods
-                    if self.method_name == "PriorityQueue":
-                        self.method.push(U,U.depth)
-                    elif self.method_name == "HQueue":
-                        cost = self.heuristic(u[0],self.problem)
-                        self.method.push(U,(cost+U.depth))
-                    else:
-                        self.method.push(U)
+            neighbors = self.problem.getSuccessors(currentState)
 
-                intarget, completed = self.problem.isGoalState(state)
-                if intarget:
-                    self.targetNodes.insert(0,U)
-                    state[1].remove(state[0])
-                    print("removed", state[0])
+            for neighbor, statedirection, unitWeight in neighbors:
+                if not neighbor in discovered:
+                    newWeight = unitWeight + node.weight
+                    self.push((node,Node(neighbor,statedirection,newWeight)), newWeight + self.heuristic(neighbor,self.problem))
+                    discovered.append(neighbor)
 
-                if completed:
-                    print("completed")
-                    targets = self.targetNodes.copy()
-                    return []
+methods = {
+    "bfs":"Queue",
+    "dfs":"Stack",
+    "ucs":"PriorityQueue",
+    "astar":"PriorityQueue"
+}
 
 class SearchProblem:
     """
@@ -179,14 +156,14 @@ def depthFirstSearch(problem):
     """
     "*** YOUR CODE HERE ***"
     s = problem.getStartState()
-    dfsSearch = GenericSearchAlgorithm("Stack", problem)
+    dfsSearch = GraphSearch(methods["dfs"], problem)
     solution = dfsSearch(s)
     print(solution)
     return solution
 
 def breadthFirstSearch(problem):
     s = problem.getStartState()
-    bfsSearch = GenericSearchAlgorithm("Queue", problem)
+    bfsSearch = GraphSearch(methods["bfs"], problem)
     solution = bfsSearch(s)
     print(solution)
     return solution
@@ -196,7 +173,7 @@ def uniformCostSearch(problem):
     "*** YOUR CODE HERE ***"
 
     s = problem.getStartState()
-    ucsSearch = GenericSearchAlgorithm("PriorityQueue", problem)
+    ucsSearch = GraphSearch(methods["ucs"], problem)
     solution = ucsSearch(s)
     print(solution)
     return solution
@@ -212,9 +189,8 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
     s = problem.getStartState()
-    astarSearch = GenericSearchAlgorithm("HQueue", problem, heuristic=heuristic)
+    astarSearch = GraphSearch(methods["astar"], problem, heuristic=heuristic)
     solution = astarSearch(s)
-    #print(solution)
     return solution
 
 

@@ -285,7 +285,6 @@ class CornersProblem(search.SearchProblem):
         for corner in self.corners:
             if not startingGameState.hasFood(*corner):
                 print('Warning: no food in corner ' + str(corner))
-        print(self.startingPosition)
         self._expanded = 0 # DO NOT CHANGE; Number of search nodes expanded
         self._visited, self._visitedlist = {}, [] # DO NOT CHANGE
 
@@ -310,13 +309,13 @@ class CornersProblem(search.SearchProblem):
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        inCorner, completed = False,False
-        if state[0] in self.corners:
-            inCorner = True
-        if len(state[1]) == 0:
-            self._visitedlist.append(state[0])
-            completed = True
-        return inCorner, completed
+        if state[0] in state[1]:
+            state[1] = [x if x != state[0] else None for x in state[1]]
+
+        if state[1] == [None,None,None,None]:
+            return True
+        else:
+            return False
 
     def getSuccessors(self, state):
         """
@@ -329,19 +328,22 @@ class CornersProblem(search.SearchProblem):
             is the incremental cost of expanding to that successor
         """
         successors = []
+        position = state[0]
+        corners = state[1]
+
         self._expanded += 1 # DO NOT CHANGE
-        self._visitedlist.append(state[0])
+
+        self._visitedlist.append(position)
+        self.visitedCorners = []
         for direction in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
-            x,y = state[0]
+            x,y = position
             dx, dy = Actions.directionToVector(direction)
-            nextx, nexty = int(x + dx), int(y + dy)
-            if not self.walls[nextx][nexty]:                                        
-                nextState = [(nextx, nexty),state[1]]
+
+            newPosition = (int(x + dx), int(y + dy))
+
+            if not self.walls[newPosition[0]][newPosition[1]]:   
+                nextState = [newPosition, corners]
                 successors.append( ( nextState, direction, 1) )
-        import __main__
-        if '_display' in dir(__main__):
-            if 'drawExpandedCells' in dir(__main__._display): #@UndefinedVariable
-                __main__._display.drawExpandedCells(self._visitedlist) #@UndefinedVariable
         return successors
 
         # Bookkeeping for display purposes
@@ -366,13 +368,7 @@ class CornersProblem(search.SearchProblem):
             if self.walls[x][y]: return 999999
         return len(actions)
 
-import math
-def NormalDepth(x):
-    rho = 1/4
-    x = rho*x
-    mu = 0; phi = 1
-    return  rho*((1/phi*math.sqrt(2*math.pi))*pow(math.e,(-1/2)*pow((x-mu)/phi,2)))
-
+            
 def cornersHeuristic(state, problem):
     """
     A heuristic for the CornersProblem that you defined.
@@ -386,24 +382,13 @@ def cornersHeuristic(state, problem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
     """
-    corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
-    distances = [math.sqrt(pow(state[0][0]-x[0],2)+pow(state[0][1]-x[1],2)) for x in corners]
+    distances = [abs(state[0][0]-x[0])+abs(state[0][1]-x[1]) for x in problem.corners]
     # draw an axis over the point to evaluate, take the number of walls intersected going up
     # and the number of walls intersected going sideways, take the distance using those 2 numbers of the hypotenuse
-    # 
-
-    # doesnt work
-    # how close is it to the closest corner
-    # get the closest corner
-    test = dict(zip(distances,corners)) 
     if distances:
-        closest = min(distances)
-        closest_corner = test[closest]
-        return closest 
+        return min(distances)
     else: return 0
-
-    
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
