@@ -368,7 +368,13 @@ class CornersProblem(search.SearchProblem):
             if self.walls[x][y]: return 999999
         return len(actions)
 
-            
+import math
+def NormalDepth(x):
+    rho = 1
+    x = rho*x
+    mu = 0; phi = 1
+    return  rho*((1/phi*math.sqrt(2*math.pi))*pow(math.e,(-1/2)*pow((x-mu)/phi,2)))
+
 def cornersHeuristic(state, problem):
     """
     A heuristic for the CornersProblem that you defined.
@@ -392,7 +398,9 @@ def cornersHeuristic(state, problem):
     
     if distances:
         sdist = sorted(distances)
-        return sdist[0] + sum(sdist[1:])
+        depths = list(map(NormalDepth,sdist))
+        print(depths)
+        return sdist[0] + sum(sdist[1:]) - depths[0]
     else: return 0
 
 class AStarCornersAgent(SearchAgent):
