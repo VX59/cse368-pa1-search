@@ -383,11 +383,16 @@ def cornersHeuristic(state, problem):
     admissible (as well as consistent).
     """
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
-    distances = [abs(state[0][0]-x[0])+abs(state[0][1]-x[1]) for x in problem.corners]
+    distances = []
+    for x in state[1]:
+        if x:
+            distances.append(abs(state[0][0]-x[0])+abs(state[0][1]-x[1]))
     # draw an axis over the point to evaluate, take the number of walls intersected going up
     # and the number of walls intersected going sideways, take the distance using those 2 numbers of the hypotenuse
+    
     if distances:
-        return min(distances)
+        sdist = sorted(distances)
+        return sdist[0] + sum(sdist[1:])
     else: return 0
 
 class AStarCornersAgent(SearchAgent):

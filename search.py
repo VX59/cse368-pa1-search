@@ -59,7 +59,6 @@ class GraphSearch:
         discovered = [s]
 
         self.push((None,Node(s,None,0)),0)
-
         while not self.method.isEmpty():
             prevNode, node = self.method.pop()
             currentState = node.state
@@ -72,7 +71,7 @@ class GraphSearch:
 
             for neighbor, statedirection, unitWeight in neighbors:
                 if not neighbor in discovered:
-                    newWeight = unitWeight + node.weight
+                    newWeight = unitWeight + node.weight 
                     self.push((node,Node(neighbor,statedirection,newWeight)), newWeight + self.heuristic(neighbor,self.problem))
                     discovered.append(neighbor)
 
