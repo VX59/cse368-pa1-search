@@ -300,7 +300,7 @@ Implement the function `findPathToClosestDot` in `searchAgents.py`. Our agent so
 
 `python pacman.py -l bigSearch -p ClosestDotSearchAgent -z .5`
 
-_Hint:_ The quickest way to complete `findPathToClosestDot` is to fill in the `AnyFoodSearchProblem`, which is missing its goal test. Then, solve that problem with an appropriate search function. The solution should be very short!
+_Hint:_ The quickest way    to complete `findPathToClosestDot` is to fill in the `AnyFoodSearchProblem`, which is missing its goal test. Then, solve that problem with an appropriate search function. The solution should be very short!
 
 Your `ClosestDotSearchAgent` won't always find the shortest possible path through the maze. Make sure you understand why and try to come up with a small example where repeatedly going to the closest dot does not result in finding the shortest path for eating all the dots.
 

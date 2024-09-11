@@ -64,7 +64,6 @@ class GraphSearch:
             currentState = node.state
             self.ancestors[node] = prevNode
             if self.problem.isGoalState(currentState):
-                print("completed")
                 return self.reconstructPath(node)
 
             neighbors = self.problem.getSuccessors(currentState)
@@ -157,14 +156,12 @@ def depthFirstSearch(problem):
     s = problem.getStartState()
     dfsSearch = GraphSearch(methods["dfs"], problem)
     solution = dfsSearch(s)
-    print(solution)
     return solution
 
 def breadthFirstSearch(problem):
     s = problem.getStartState()
     bfsSearch = GraphSearch(methods["bfs"], problem)
     solution = bfsSearch(s)
-    print(solution)
     return solution
 
 def uniformCostSearch(problem):
@@ -174,7 +171,6 @@ def uniformCostSearch(problem):
     s = problem.getStartState()
     ucsSearch = GraphSearch(methods["ucs"], problem)
     solution = ucsSearch(s)
-    print(solution)
     return solution
 
 def nullHeuristic(state, problem=None):
