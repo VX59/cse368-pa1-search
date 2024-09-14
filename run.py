@@ -12,10 +12,15 @@ you wan to run!
 
 #pacman.main('python pacman.py --layout tinyMaze --pacman GoWestAgent')
 #pacman.main('python pacman.py -l tinyMaze -p SearchAgent -a fn=tinyMazeSearch')
-pacman.main('python pacman.py -l mediumMaze -p SearchAgent -a fn=dfs')
+#pacman.main('python pacman.py -l mediumMaze -p SearchAgent -a fn=dfs')
 
 
-# autograder
+# autograder    
 #autograder.run('python autograder.py')
+
 #autograder.run('python autograder -q q1')
-#autograder.run('python autograder.py -t test_cases/q2/graph_bfs_vs_dfs')
+#autograder.run('python autograder -q q2')
+autograder.run('python autograder -q q7')
+
+
+#autograder.run('python autograder.py -t test_cases/q6/corner_sanity_3')

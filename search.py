@@ -43,7 +43,7 @@ class GraphSearch:
 
     def push(self,item,priority):
         if self.methodName == "PriorityQueue":
-            self.method.push(item,priority)
+            self.method.update(item,priority)
         else:
             self.method.push(item)
 
@@ -56,23 +56,29 @@ class GraphSearch:
         return path
 
     def __call__(self,s):
-        discovered = [s]
-
-        self.push((None,Node(s,None,0)),0)
+        S = Node(s,None,0)
+        explored = []
+        self.push(S,0)
         while not self.method.isEmpty():
-            prevNode, node = self.method.pop()
-            currentState = node.state
-            self.ancestors[node] = prevNode
-            if self.problem.isGoalState(currentState):
+           
+            node = self.method.pop()
+            if self.problem.isGoalState(node.state):
                 return self.reconstructPath(node)
 
-            neighbors = self.problem.getSuccessors(currentState)
-
-            for neighbor, statedirection, unitWeight in neighbors:
-                if not neighbor in discovered:
-                    newWeight = unitWeight + node.weight 
-                    self.push((node,Node(neighbor,statedirection,newWeight)), newWeight + self.heuristic(neighbor,self.problem))
-                    discovered.append(neighbor)
+            if not node.state in explored:
+                neighbors =  self.problem.getSuccessors(node.state)
+                
+                for neighbor, statedirection, unitWeight in neighbors:
+                    newWeight = unitWeight + node.weight
+                    newNode = Node(neighbor,statedirection,newWeight)
+                    
+                    if not neighbor in explored:
+                        self.ancestors[newNode] = node
+                        self.push(newNode, newWeight + self.heuristic(neighbor,self.problem))
+                
+                explored.append(node.state)
+                #print("popped",node.state)
+                #print(explored)     
 
 methods = {
     "bfs":"Queue",
@@ -160,7 +166,7 @@ def depthFirstSearch(problem):
 
 def breadthFirstSearch(problem):
     s = problem.getStartState()
-    bfsSearch = GraphSearch(methods["bfs"], problem)
+    bfsSearch= GraphSearch(methods["bfs"], problem)
     solution = bfsSearch(s)
     return solution
 

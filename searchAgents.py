@@ -291,7 +291,9 @@ class CornersProblem(search.SearchProblem):
         # Please add any code here which you would like to use
         # in initializing the problem
         "*** YOUR CODE HERE ***"
-
+        self.visitedCorners = []
+        self.mstDistance = 0
+        self.game = startingGameState
     # define the state as a boolean array P that represents if there is food in some corner
     # the start state is when AND(P) == True
     def getStartState(self):
@@ -344,13 +346,6 @@ class CornersProblem(search.SearchProblem):
             if not self.walls[newPosition[0]][newPosition[1]]:   
                 nextState = [newPosition, corners]
                 successors.append( ( nextState, direction, 1) )
-        return successors
-
-        # Bookkeeping for display purposes
-        self._expanded += 1 # DO NOT CHANGE
-        if state[0] not in self._visited:
-            self._visited[state] = True
-            self._visitedlist.append(state)
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -370,10 +365,67 @@ class CornersProblem(search.SearchProblem):
 
 import math
 def NormalDepth(x):
-    rho = 1
+    rho = 1/4
     x = rho*x
     mu = 0; phi = 1
     return  rho*((1/phi*math.sqrt(2*math.pi))*pow(math.e,(-1/2)*pow((x-mu)/phi,2)))
+
+def mst(remainingCorners, problem):
+    
+    pairs = []
+    for i in range(len(remainingCorners)):
+        a = remainingCorners[i]
+        for j in range(len(remainingCorners)):
+            if i != j:
+                b = remainingCorners[j]
+                if not (a,b) in pairs and not (b,a) in pairs:
+                    if not None in a and not None in b:
+                            pairs.append((a,b))
+    pairdistances = []
+    for p in pairs:
+        # calculate distances
+        pairdistances.append(manhattandDistance(p[0],p[1]))
+
+    while len(pairdistances) > 0:
+        largest = max(pairdistances)
+        largestIndex = pairdistances.index(largest)
+        testpairs = pairs.copy()
+        testpairs.remove(testpairs[largestIndex])
+
+        hasallc = len(remainingCorners)
+        for c in remainingCorners:
+            for p in testpairs:
+                if c in p:
+                    hasallc -= 1
+        if hasallc <= 0 :
+            pairs.remove(pairs[largestIndex])
+            pairdistances.remove(pairdistances[largestIndex])
+        else:
+            break
+
+    return sum(pairdistances)
+
+import itertools
+def tsp(remainingCorners, currenState, problem):
+    # permutate possible paths
+    remainingCorners.append(currenState)
+    permutations = list(itertools.permutations(remainingCorners ))
+
+    possiblePaths = {}
+    # calculate distance of path
+    for path in permutations:
+        pathlength = 0
+        for i in range(1,len(path)):
+            a = path[i-1]; b = path[i]
+            pathlength += math.sqrt(manhattandDistance(a,b))
+        possiblePaths[pathlength] = path
+        #print(pathlength,path)
+    #print(min(possiblePaths.keys()))
+
+    return min(possiblePaths.keys())
+
+def manhattandDistance(x,y):
+    return abs(x[0]-y[0]) + abs(x[1]-y[1])
 
 def cornersHeuristic(state, problem):
     """
@@ -388,26 +440,44 @@ def cornersHeuristic(state, problem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
     """
+
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
-    distances = []
-    for x in state[1]:
+    corners = problem.corners
+
+    heuristic = 0    
+
+    remainingCorners = []
+    for x in problem.corners:
+        if not x in problem.visitedCorners:
+            remainingCorners.append(x)  
+
+    if state[0] in problem.corners:
+        problem.visitedCorners.append(state[0])
+        remainingCorners.remove(state[0])
+
+    if len(problem.visitedCorners) == 4:
+        #print("a possible solution")
+        return 0
+
+    xdist = []
+
+    for x in remainingCorners:
         if x:
-            distances.append(abs(state[0][0]-x[0])+abs(state[0][1]-x[1]))
-    # draw an axis over the point to evaluate, take the number of walls intersected going up
-    # and the number of walls intersected going sideways, take the distance using those 2 numbers of the hypotenuse
+            dx = mazeDistance(x,state[0],problem.game)
+
+            xdist.append(dx)
     
-    if distances:
-        sdist = sorted(distances)
-        depths = list(map(NormalDepth,sdist))
-        print(depths)
-        return sdist[0] + sum(sdist[1:]) - depths[0]
-    else: return 0
+    if len(xdist) > 1:
+        sxdist = sorted(xdist)
+        return mst(remainingCorners,problem) + sxdist[0]
+    else:
+        return xdist[0]
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
     def __init__(self):
         self.searchFunction = lambda prob: search.aStarSearch(prob, cornersHeuristic)
-        self.searchType = CornersProblem
+        self.searchType = CornersProblem    
 
 class FoodSearchProblem:
     """
@@ -499,17 +569,28 @@ def foodHeuristic(state, problem):
     for x in range(foodGrid.width):
         for y in range(foodGrid.height):
             if foodGrid[x][y]: foodPositions.append((x,y))
-    
-    distances = []
-    for p in foodPositions:
-        distance = abs(p[0]-position[0]) + abs(p[1] - position[1])
-        distances.append(distance)
-    
 
-    if distances:
-        sdist = sorted(distances)
-        return sdist[0] + sum(sdist[1:])
-    else: return 0
+    if problem.isGoalState(state):
+        #print("a possible solution")
+        return 0
+
+    xdist = []
+
+    for x in foodPositions:
+        if x:
+            dx = mazeDistance(x,state[0],problem.startingGameState)
+            xdist.append(dx)
+    
+    if len(foodPositions) > 1     :
+        sxdist = sorted(xdist)
+        sxdist.reverse()
+        x = mazeDistance(foodPositions[xdist.index(sxdist[0])],
+                            foodPositions[xdist.index(sxdist[1])],
+                            problem.startingGameState)
+        y = sxdist[1]
+        return x+y
+    else:
+        return xdist[0]
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
