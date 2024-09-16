@@ -553,9 +553,12 @@ class HeuristicGrade(testClasses.TestCase):
         self.layoutText = testDict['layout']
         self.layoutName = testDict['layoutName']
         self.searchProblemClassName = testDict['searchProblemClass']
+        print(self.searchProblemClassName)
         self.heuristicName = testDict['heuristic']
         self.basePoints = int(testDict['basePoints'])
         self.thresholds = [int(t) for t in testDict['gradingThresholds'].split()]
+        self.multiplier = 1 if 'multiplier' not in testDict else int(testDict['multiplier'])
+        print(testDict['multiplier'])
 
     def setupProblem(self, searchAgents):
         lay = layout.Layout([l.strip() for l in self.layoutText.split('\n')])
@@ -585,10 +588,10 @@ class HeuristicGrade(testClasses.TestCase):
             return False
 
         grades.addPoints(self.basePoints)
-        points = 0
+        points = self.multiplier
         for threshold in self.thresholds:
             if expanded <= threshold:
-                points += 1
+                points += self.multiplier
         grades.addPoints(points)
         if points >= len(self.thresholds):
             grades.addMessage('PASS: %s' % self.path)
@@ -768,6 +771,7 @@ class CornerHeuristicPacman(testClasses.TestCase):
     def execute(self, grades, moduleDict, solutionDict):
         search = moduleDict['search']
         searchAgents = moduleDict['searchAgents']
+        multiplier = int(solutionDict['multiplier'])
         total = 0
         true_cost = float(solutionDict['cost'])
         thresholds = list(map(int, solutionDict['thresholds'].split()))
@@ -790,7 +794,7 @@ class CornerHeuristicPacman(testClasses.TestCase):
         points = 0
         for threshold in thresholds:
             if expanded <= threshold:
-                points += 1
+                points += multiplier
         grades.addPoints(points)
         if points >= len(thresholds):
             grades.addMessage('PASS: Heuristic resulted in expansion of %d nodes' % expanded)

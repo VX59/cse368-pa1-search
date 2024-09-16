@@ -336,13 +336,12 @@ class CornersProblem(search.SearchProblem):
         self._expanded += 1 # DO NOT CHANGE
 
         self._visitedlist.append(position)
-        self.visitedCorners = []
         for direction in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
             x,y = position
             dx, dy = Actions.directionToVector(direction)
 
             newPosition = (int(x + dx), int(y + dy))
-
+            if state[0] in state[1]: state[1].remove(state[0])
             if not self.walls[newPosition[0]][newPosition[1]]:   
                 nextState = [newPosition, corners]
                 successors.append( ( nextState, direction, 1) )
@@ -428,50 +427,33 @@ def manhattandDistance(x,y):
     return abs(x[0]-y[0]) + abs(x[1]-y[1])
 
 def cornersHeuristic(state, problem):
-    """
-    A heuristic for the CornersProblem that you defined.
-
-      state:   The current search state
-               (a data structure you chose in your search problem)
-
-      problem: The CornersProblem instance for this layout.
-
-    This function should always return a number that is a lower bound on the
-    shortest path from the state to a goal of the problem; i.e.  it should be
-    admissible (as well as consistent).
-    """
-
-    walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
-    corners = problem.corners
-
-    heuristic = 0    
-
-    remainingCorners = []
-    for x in problem.corners:
-        if not x in problem.visitedCorners:
-            remainingCorners.append(x)  
-
-    if state[0] in problem.corners:
-        problem.visitedCorners.append(state[0])
-        remainingCorners.remove(state[0])
-
-    if len(problem.visitedCorners) == 4:
-        #print("a possible solution")
+    remainingCorners = [corner for corner in state[1] if corner]
+    #print(remainingCorners)
+    if not remainingCorners:        
         return 0
 
-    xdist = []
+    distances = [mazeDistance(state[0], corner,problem.game) for corner in remainingCorners]
 
-    for x in remainingCorners:
-        if x:
-            dx = mazeDistance(x,state[0],problem.game)
 
-            xdist.append(dx)
-    
-    if len(xdist) > 1:
-        sxdist = sorted(xdist)
-        return mst(remainingCorners,problem) + sxdist[0]
+    if len(remainingCorners) > 1:
+        sdist = sorted(distances)
+        sdist.reverse()
+        furthest = sdist[0]
+        nextFurthest = sdist[1]
+        closest = sdist[-1]
+        nextClosest = sdist[-2]
+        closestCorner = remainingCorners[distances.index(closest)]
+        nextClosestCorner = remainingCorners[distances.index(nextClosest)]
+        furthestCorner = remainingCorners[distances.index(furthest)]
+        nextFurthestCorner = remainingCorners[distances.index(nextFurthest)]
+
+        y = mazeDistance(closestCorner, furthestCorner, problem.game)
+        w = mazeDistance(nextClosestCorner, nextFurthestCorner, problem.game)
+        return closest+y
     else:
-        return xdist[0]
+        return mazeDistance(state[0],remainingCorners[0], problem.game)
+
+
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
@@ -570,27 +552,30 @@ def foodHeuristic(state, problem):
         for y in range(foodGrid.height):
             if foodGrid[x][y]: foodPositions.append((x,y))
 
-    if problem.isGoalState(state):
-        #print("a possible solution")
+    #print(remainingCorners)
+    if not foodPositions:        
         return 0
 
-    xdist = []
+    distances = [mazeDistance(state[0],food,problem.startingGameState) for food in foodPositions]
 
-    for x in foodPositions:
-        if x:
-            dx = mazeDistance(x,state[0],problem.startingGameState)
-            xdist.append(dx)
-    
-    if len(foodPositions) > 1     :
-        sxdist = sorted(xdist)
-        sxdist.reverse()
-        x = mazeDistance(foodPositions[xdist.index(sxdist[0])],
-                            foodPositions[xdist.index(sxdist[1])],
-                            problem.startingGameState)
-        y = sxdist[1]
-        return x+y
+
+    if len(foodPositions) > 1:
+        sdist = sorted(distances)
+        sdist.reverse()
+        furthest = sdist[0]
+        nextFurthest = sdist[1]
+        closest = sdist[-1]
+        nextClosest = sdist[-2]
+        closestCorner = foodPositions[distances.index(closest)]
+        nextClosestCorner = foodPositions[distances.index(nextClosest)]
+        furthestCorner = foodPositions[distances.index(furthest)]
+        nextFurthestCorner = foodPositions[distances.index(nextFurthest)]
+
+        y = mazeDistance(closestCorner, furthestCorner, problem.startingGameState)
+        w = mazeDistance(nextClosestCorner, nextFurthestCorner, problem.startingGameState)
+        return closest+max([w,y])
     else:
-        return xdist[0]
+        return mazeDistance(state[0],foodPositions[0], problem.startingGameState)
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"

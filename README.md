@@ -150,7 +150,7 @@ Your code should quickly find a solution for:
 `python pacman.py -l mediumMaze -p SearchAgent`
 
 `python pacman.py -l bigMaze -z .5 -p SearchAgent`
-
+        
 The Pacman board will show an overlay of the states explored, and the order in which they were explored (brighter red means earlier exploration). Is the exploration order what you would have expected? Does Pacman actually go to all the explored squares on his way to the goal?
 
 _Hint:_ If you use a `Stack` as your data structure, the solution found by your DFS algorithm for `mediumMaze` should have a length of 130 (provided you push successors onto the fringe in the order provided by getSuccessors; you might get 246 if you push them in the reverse order). Is this a least cost solution? If not, think about what depth-first search is doing wrong.

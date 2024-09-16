@@ -16,11 +16,11 @@ you wan to run!
 
 
 # autograder    
-#autograder.run('python autograder.py')
+autograder.run('python autograder.py')
 
 #autograder.run('python autograder -q q1')
 #autograder.run('python autograder -q q2')
-autograder.run('python autograder -q q7')
+#autograder.run('python autograder -q q7')
 
 
 #autograder.run('python autograder.py -t test_cases/q6/corner_sanity_3')
